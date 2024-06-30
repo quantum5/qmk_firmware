@@ -68,3 +68,59 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______, _______,                   _______,                            _______, _______, _______,          _______, RGB_SAD, RGB_VAD, RGB_SAI,          _______, _______),
 };
 // clang-format on
+
+static void update_background_led(os_variant_t os) {
+    HSV hsv = rgb_matrix_get_hsv();
+
+    switch (os) {
+        case OS_MACOS:
+        case OS_IOS:
+            rgb_matrix_sethsv_noeeprom(43, hsv.s, hsv.v); // yellow
+            break;
+        case OS_WINDOWS:
+            rgb_matrix_sethsv_noeeprom(170, hsv.s, hsv.v); // blue
+            break;
+        case OS_LINUX:
+            rgb_matrix_sethsv_noeeprom(0, hsv.s, hsv.v); // red
+            break;
+        case OS_UNSURE:
+            rgb_matrix_sethsv_noeeprom(85, hsv.s, hsv.v); // green
+            break;
+    }
+}
+
+bool process_detected_host_os_user(os_variant_t detected_os) {
+    rgb_matrix_enable_noeeprom();
+    rgb_matrix_mode(RGB_MATRIX_CUSTOM_splash_on_backlight);
+
+    update_background_led(detected_os);
+
+    switch (detected_os) {
+        case OS_MACOS:
+        case OS_IOS:
+            default_layer_set(1 << MAC_B);
+            break;
+        default:
+    }
+
+    return true;
+}
+
+layer_state_t default_layer_state_set_user(layer_state_t state) {
+    if (state & (1 << MAC_B)) {
+        update_background_led(OS_MACOS);
+    } else {
+        os_variant_t os = detected_host_os();
+        switch (os) {
+            case OS_MACOS:
+            case OS_IOS:
+                update_background_led(OS_UNSURE);
+                break;
+            default:
+                update_background_led(os);
+                break;
+        }
+    }
+
+    return state;
+}
