@@ -37,3 +37,4 @@
 #define I2C1_SCL_PAL_MODE 4
 
 #define RGB_TRIGGER_ON_KEYDOWN
+#define DEBOUNCE 30
